@@ -1,5 +1,5 @@
-# [MathJax-demos-web](https://github.com/mathjax/MathJax-demos-web)
-<img class="shield" alt="GitHub release version" src="https://img.shields.io/github/v/release/mathjax/MathJax-demos-web.svg?sort=semver">
+# [MathJax-Demos-Web](https://github.com/M0rtzz/MathJax-Demos-Web)
+<img class="shield" alt="GitHub release version" src="https://img.shields.io/github/v/release/mathjax/MathJax-Demos-Web.svg?sort=semver">
 
 A repository with examples using [MathJax version
 4](https://github.com/mathjax/MathJax-src) in web pages.
@@ -22,50 +22,50 @@ versions of MathJax.
 
 ### Processing the Whole Page
 
-* [tex-chtml.html](https://mathjax.github.io/MathJax-demos-web/page/tex-chtml.html)
-* [tex-mml.html](https://mathjax.github.io/MathJax-demos-web/page/tex-mml.html)
-* [tex-svg.html](https://mathjax.github.io/MathJax-demos-web/page/tex-svg.html)
-* [mml-chtml.html](https://mathjax.github.io/MathJax-demos-web/page/mml-chtml.html)
-* [mml-svg.html](https://mathjax.github.io/MathJax-demos-web/page/mml-svg.html)
-* [equation-numbers.html](https://mathjax.github.io/MathJax-demos-web/page/equation-numbers.html)
-* [equation-refs.html](https://mathjax.github.io/MathJax-demos-web/page/equation-refs.html)
+* [tex-chtml.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/tex-chtml.html)
+* [tex-mml.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/tex-mml.html)
+* [tex-svg.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/tex-svg.html)
+* [mml-chtml.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/mml-chtml.html)
+* [mml-svg.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/mml-svg.html)
+* [equation-numbers.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/equation-numbers.html)
+* [equation-refs.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/equation-refs.html)
 
 ### Processing User Input
 
-* [tex2chtml.html](https://mathjax.github.io/MathJax-demos-web/input/tex2chtml.html)
-* [tex2mml.html](https://mathjax.github.io/MathJax-demos-web/input/tex2mml.html)
-* [tex2svg.html](https://mathjax.github.io/MathJax-demos-web/input/tex2svg.html)
-* [mml2chtml.html](https://mathjax.github.io/MathJax-demos-web/input/mml2chtml.html)
-* [mml2svg.html](https://mathjax.github.io/MathJax-demos-web/input/mml2svg.html)
-* [tex-mml2chtml.html](https://mathjax.github.io/MathJax-demos-web/input/tex-mml2chtml.html)
-* [tex_mml2svg.html](https://mathjax.github.io/MathJax-demos-web/input/tex-mml2svg.html)
+* [tex2chtml.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/tex2chtml.html)
+* [tex2mml.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/tex2mml.html)
+* [tex2svg.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/tex2svg.html)
+* [mml2chtml.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/mml2chtml.html)
+* [mml2svg.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/mml2svg.html)
+* [tex-mml2chtml.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/tex-mml2chtml.html)
+* [tex_mml2svg.html](https://m0rtzz.github.io/MathJax-Demos-Web/input/tex-mml2svg.html)
 
 ### Interaction
 
-* [reveal-steps.html](https://mathjax.github.io/MathJax-demos-web/interaction/reveal-steps.html)
-* [toggle-steps.html](https://mathjax.github.io/MathJax-demos-web/interaction/toggle-steps.html)
+* [reveal-steps.html](https://m0rtzz.github.io/MathJax-Demos-Web/interaction/reveal-steps.html)
+* [toggle-steps.html](https://m0rtzz.github.io/MathJax-Demos-Web/interaction/toggle-steps.html)
 
 ### Version 2 Compatibility
 
-* [v2-color.html](https://mathjax.github.io/MathJax-demos-web/v2-support/v2-color.html)
-* [v2-script-tags.html](https://mathjax.github.io/MathJax-demos-web/v2-support/v2-script-tags.html)
-* [v2-compatibility.html](https://mathjax.github.io/MathJax-demos-web/v2-support/v2-compatibility.html)
-* [v2 to v4 Configuration Converter](https://mathjax.github.io/MathJax-demos-web/convert-configuration/convert-configuration.html)
+* [v2-color.html](https://m0rtzz.github.io/MathJax-Demos-Web/v2-support/v2-color.html)
+* [v2-script-tags.html](https://m0rtzz.github.io/MathJax-Demos-Web/v2-support/v2-script-tags.html)
+* [v2-compatibility.html](https://m0rtzz.github.io/MathJax-Demos-Web/v2-support/v2-compatibility.html)
+* [v2 to v4 Configuration Converter](https://m0rtzz.github.io/MathJax-Demos-Web/convert-configuration/convert-configuration.html)
 
 ### MathML and Assistive Extensions
 
-* [tex-mml.html](https://mathjax.github.io/MathJax-demos-web/page/tex-mml.html)
-* [mml-attribute.html](https://mathjax.github.io/MathJax-demos-web/custom/mml-attribute.html)
-* [speech generator lab](https://mathjax.github.io/MathJax-demos-web/speech-generator/convert-with-speech.html) (explores all possible speech options)
+* [tex-mml.html](https://m0rtzz.github.io/MathJax-Demos-Web/page/tex-mml.html)
+* [mml-attribute.html](https://m0rtzz.github.io/MathJax-Demos-Web/custom/mml-attribute.html)
+* [speech generator lab](https://m0rtzz.github.io/MathJax-Demos-Web/speech-generator/convert-with-speech.html) (explores all possible speech options)
 
 ### Customization
 
-* [load-mathjax.html](https://mathjax.github.io/MathJax-demos-web/custom/load-mathjax/load-mathjax.html)
-* [tex-macros.html](https://mathjax.github.io/MathJax-demos-web/custom/tex-macros.html)
-* [customized-load.html](https://mathjax.github.io/MathJax-demos-web/custom/customized-load.html)
-* [custom-tex-extension](https://mathjax.github.io/MathJax-demos-web/custom/custom-tex-extension/mml.html)
-* [custom-component](https://mathjax.github.io/MathJax-demos-web/custom/custom-component/custom-component.html)
-* [custom-build](https://mathjax.github.io/MathJax-demos-web/custom/custom-build/custom-mathjax.html)
+* [load-mathjax.html](https://m0rtzz.github.io/MathJax-Demos-Web/custom/load-mathjax/load-mathjax.html)
+* [tex-macros.html](https://m0rtzz.github.io/MathJax-Demos-Web/custom/tex-macros.html)
+* [customized-load.html](https://m0rtzz.github.io/MathJax-Demos-Web/custom/customized-load.html)
+* [custom-tex-extension](https://m0rtzz.github.io/MathJax-Demos-Web/custom/custom-tex-extension/mml.html)
+* [custom-component](https://m0rtzz.github.io/MathJax-Demos-Web/custom/custom-component/custom-component.html)
+* [custom-build](https://m0rtzz.github.io/MathJax-Demos-Web/custom/custom-build/custom-mathjax.html)
 
 
 ## MathJax Component Files
@@ -180,7 +180,7 @@ instead, you use a global `MathJax` variable to set the configuration
 
 In order to help you move from version 2 to version 3, there is a
 [configuration
-converter](https://mathjax.github.io/MathJax-demos-web/configuration-converter/configuration-converter.html)
+converter](https://m0rtzz.github.io/MathJax-Demos-Web/configuration-converter/configuration-converter.html)
 that will take your old version 2 configuration and give you the
 corresponding version 4 configuration.
 
@@ -214,7 +214,7 @@ for complete information about how to obtain the files.
 * [MathJax Documentation](https://docs.mathjax.org)
 * [MathJax Components](https://github.com/mathjax/MathJax)
 * [MathJax Source Code](https://github.com/mathjax/MathJax-src)
-* [MathJax Web Examples](https://github.com/mathjax/MathJax-demos-web)
+* [MathJax Web Examples](https://github.com/M0rtzz/MathJax-Demos-Web)
 * [MathJax Node Examples](https://github.com/mathjax/MathJax-demos-node)
 * [MathJax Bug Tracker](https://github.com/mathjax/MathJax/issues)
 * [MathJax Users' Group](http://groups.google.com/group/mathjax-users)

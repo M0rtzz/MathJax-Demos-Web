@@ -1,5 +1,5 @@
 {
-  "name": "MathJax-demos-web",
+  "name": "MathJax-Demos-Web",
   "version": "4.0.0",
   "description": "Demos using MathJax version 4 in web pages",
   "dependencies": {
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mathjax/MathJax-demos-web/"
+    "url": "https://github.com/M0rtzz/MathJax-Demos-Web/"
   },
   "keywords": [
     "MathJax",
