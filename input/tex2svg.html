@@ -12,6 +12,7 @@
     //
     loader: {load: ['[tex]/texhtml']},
     tex: {packages: {'[+]': ['texhtml']}},
+    output: {font: 'mathjax-termes'},
     //
     // Use the startup ready() function to set the options as they
     // are in the browser (in case of a reload that retains input states),
@@ -30,7 +31,7 @@
         const doc = MathJax.startup.document;
         doc.inputJax.tex.parseOptions.options.allowTexHTML = document.querySelector('#allowhtml').checked;
         doc.outputJax.options.mathmlSpacing = document.querySelector('#mathmlspacing').checked;
-        document.querySelector('#font').value = 'mathjax-newcm';
+        document.querySelector('#font').value = 'mathjax-termes';
         //
         // Disable the some menu items.
         //
@@ -100,6 +101,42 @@
       for (const name of ['display', 'allowhtml', 'mathmlspacing', 'font', 'render']) {
         document.querySelector(`#${name}`).disabled = !enable;
       }
+      document.querySelector('#copy').disabled = !enable || !document.querySelector('#output svg');
+    },
+
+    //
+    // Copy the generated SVG markup to the clipboard.
+    //
+    async copySVG() {
+      const svg = document.querySelector('#output svg');
+      if (!svg) return;
+
+      const copy = svg.cloneNode(true);
+      copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      const source = new XMLSerializer().serializeToString(copy);
+      const button = document.querySelector('#copy');
+      let textarea = null;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(source);
+        } else {
+          textarea = document.createElement('textarea');
+          textarea.value = source;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          if (!document.execCommand('copy')) throw new Error('Copy command failed');
+        }
+        button.value = 'SVG Copied!';
+      } catch (err) {
+        button.value = 'Copy Failed';
+        console.error(err);
+      } finally {
+        if (textarea) textarea.remove();
+      }
+      setTimeout(() => button.value = 'Copy SVG', 1500);
     },
 
     //
@@ -180,7 +217,7 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}.
   <div class="left">
     <div id="controls">
 
-      <input type="checkbox" id="display" checked onchange="Interactiveconvert()">
+      <input type="checkbox" id="display" checked onchange="Interactive.convert()">
          <label for="display">Display style</label><br>
 
       <input type="checkbox" id="allowhtml" onchange="Interactive.allowHTML(this.checked)">
@@ -198,11 +235,11 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}.
           <option>mathjax-dejavu</option>
           <option>mathjax-fira</option>
           <option>mathjax-modern</option>
-          <option selected>mathjax-newcm</option>
+          <option>mathjax-newcm</option>
           <option>mathjax-pagella</option>
           <option>mathjax-schola</option>
           <option>mathjax-stix2</option>
-          <option>mathjax-termes</option>
+          <option selected>mathjax-termes</option>
           <option>mathjax-tex</option>
         </select>
 
@@ -211,6 +248,7 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}.
 
   <div class="right">
     <input type="button" value="Render TeX" id="render" onclick="Interactive.convert()" />
+    <input type="button" value="Copy SVG" id="copy" onclick="Interactive.copySVG()" disabled />
   </div>
 
   <br clear="all" />
