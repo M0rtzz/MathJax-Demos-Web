@@ -51,47 +51,78 @@
   <script class="show" defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
   <script class="show">
   const Interactive = {
+    renderTimer: null,
+    rendering: false,
+    rerender: false,
+
+    //
+    // Render shortly after the user stops typing.
+    //
+    queueConvert() {
+      if (this.renderTimer !== null) clearTimeout(this.renderTimer);
+      this.renderTimer = setTimeout(() => {
+        this.renderTimer = null;
+        this.convert();
+      }, 250);
+    },
+
     async convert() {
+      if (this.renderTimer !== null) {
+        clearTimeout(this.renderTimer);
+        this.renderTimer = null;
+      }
+      if (this.rendering) {
+        this.rerender = true;
+        return;
+      }
+      this.rendering = true;
       //
       // Disable the input controls until MathJax is done.
       //
       this.enableControls(false);
-      //
-      // Get the TeX input and the node to use for output.
-      //
-      const input = document.querySelector('#input').value.trim();
-      const output = document.querySelector('#output');
-      //
-      // Reset the tex labels (and automatic equation numbers, though there aren't any here).
-      // Get the conversion options (metrics and display settings).
-      // Convert the input to SVG output and use a promise to wait for it to be ready
-      //   (in case an extension needs to be loaded dynamically).
-      //
-      MathJax.texReset();
-      const options = MathJax.getMetricsFor(output);
-      options.display = document.querySelector('#display').checked;
-      MathJax.startup.document.clear();
-      await MathJax.tex2svgPromise(input, options).then((node) => {
+      try {
+        do {
+          this.rerender = false;
+          //
+          // Get the TeX input and the node to use for output.
+          //
+          const input = document.querySelector('#input').value.trim();
+          const output = document.querySelector('#output');
+          //
+          // Reset the tex labels (and automatic equation numbers, though there aren't any here).
+          // Get the conversion options (metrics and display settings).
+          // Convert the input to SVG output and use a promise to wait for it to be ready
+          //   (in case an extension needs to be loaded dynamically).
+          //
+          MathJax.texReset();
+          const options = MathJax.getMetricsFor(output);
+          options.display = document.querySelector('#display').checked;
+          MathJax.startup.document.clear();
+          await MathJax.tex2svgPromise(input, options).then((node) => {
+            //
+            // The promise returns the typeset node, which we set as the output.
+            // Then update the document to include the adjusted CSS for the
+            //   content of the new equation.
+            //
+            output.innerHTML = '';
+            output.appendChild(node);
+            MathJax.startup.document.updateDocument();
+          }).catch((err) => {
+            //
+            // If there was an error, put the message into the output,
+            // and report it to the console.
+            //
+            output.innerHTML = `<pre>Error: ${err.message}</pre>`;
+            console.error(err);
+          });
+        } while (this.rerender);
+      } finally {
         //
-        // The promise returns the typeset node, which we set as the output.
-        // Then update the document to include the adjusted CSS for the
-        //   content of the new equation.
+        // Error or not, re-enable the display and render buttons.
         //
-        output.innerHTML = '';
-        output.appendChild(node);
-        MathJax.startup.document.updateDocument();
-      }).catch((err) => {
-        //
-        // If there was an error, put the message into the output,
-        // and report it to the console.
-        //
-        output.innerHTML = `<pre>Error: ${err.message}</pre>`;
-        console.error(err);
-      })
-      //
-      // Error or not, re-enable the display and render buttons
-      //
-      this.enableControls(true);
+        this.rendering = false;
+        this.enableControls(true);
+      }
     },
 
     //
@@ -111,8 +142,7 @@
       const svg = document.querySelector('#output svg');
       if (!svg) return;
 
-      const copy = svg.cloneNode(true);
-      copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      const copy = this.prepareSVGForCopy(svg);
       const source = new XMLSerializer().serializeToString(copy);
       const button = document.querySelector('#copy');
       let textarea = null;
@@ -137,6 +167,49 @@
         if (textarea) textarea.remove();
       }
       setTimeout(() => button.value = 'Copy SVG', 1500);
+    },
+
+    //
+    // Enlarge the copied SVG for Figma and extend its frame to include glyph overhangs.
+    //
+    prepareSVGForCopy(svg) {
+      const copy = svg.cloneNode(true);
+      const box = svg.viewBox.baseVal;
+      const rect = svg.getBoundingClientRect();
+      let left = box.x;
+      let top = box.y;
+      let right = box.x + box.width;
+      let bottom = box.y + box.height;
+
+      try {
+        const content = svg.querySelector(':scope > g[data-mml-node="math"]') || svg;
+        const bounds = content.getBBox();
+        left = Math.min(left, bounds.x);
+        top = Math.min(top, bounds.y);
+        right = Math.max(right, bounds.x + bounds.width);
+        bottom = Math.max(bottom, bounds.y + bounds.height);
+      } catch (err) {
+        console.warn('Unable to measure the SVG content bounds', err);
+      }
+
+      const padding = Math.max(20, Math.max(right - left, bottom - top) * 0.02);
+      left -= padding;
+      top -= padding;
+      right += padding;
+      bottom += padding;
+
+      const width = right - left;
+      const height = bottom - top;
+      const format = (value) => Math.round(value * 1000) / 1000;
+      const scaleX = box.width ? rect.width / box.width : 1;
+      const scaleY = box.height ? rect.height / box.height : 1;
+
+      copy.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      copy.setAttribute('viewBox', `${format(left)} ${format(top)} ${format(width)} ${format(height)}`);
+      copy.setAttribute('width', `${format(width * scaleX * 10)}px`);
+      copy.setAttribute('height', `${format(height * scaleY * 10)}px`);
+      copy.setAttribute('overflow', 'visible');
+      return copy;
     },
 
     //
@@ -205,7 +278,7 @@
  
   <h1>MathJax v4: TeX to SVG</h1>
 
-  <textarea id="input" rows="15" cols="10">
+  <textarea id="input" rows="15" cols="10" oninput="Interactive.queueConvert()">
 %
 % Enter TeX commands below
 %
@@ -268,9 +341,9 @@ load extensions dynamically, or one is loaded automatically by the
 <code>autoload</code> extension, or the font needs to load additional
 data for the characters used in the expression.</p>
 
-<p>When the user presses the <code>Render TeX</code> button or
-switches the <code>display</code> checkbox or one of the other
-controls, the <code>Interactive.convert()</code> function runs. The
+<p>When the user edits the input, presses the <code>Render TeX</code>
+button, or switches the <code>display</code> checkbox or one of the
+other controls, the <code>Interactive.convert()</code> function runs. The
 comments in the code explain how the conversion process is
 handled. Note that the user interface is disabled during the
 typesetting process, since the conversion is done asynchronously in
