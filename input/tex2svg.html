@@ -8,10 +8,10 @@
   <script class="show">
   MathJax = {
     //
-    // Load the texhtml package and configure it.
+    // Load the texhtml and color packages and configure them.
     //
-    loader: {load: ['[tex]/texhtml']},
-    tex: {packages: {'[+]': ['texhtml']}},
+    loader: {load: ['[tex]/texhtml', '[tex]/color']},
+    tex: {packages: {'[+]': ['texhtml', 'color']}},
     output: {font: 'mathjax-termes'},
     //
     // Use the startup ready() function to set the options as they
@@ -66,6 +66,17 @@
       }, 250);
     },
 
+    //
+    // MathJax supports RGB and rgb natively, but not xcolor's HTML model.
+    // Convert six-digit HTML colors to the equivalent CSS color syntax.
+    //
+    normalizeColorModels(input) {
+      return input.replace(
+        /(^|[^\\])\\textcolor\s*\[\s*HTML\s*\]\s*\{\s*([0-9A-Fa-f]{6})\s*\}/gm,
+        (_, prefix, color) => `${prefix}\\textcolor{#${color}}`
+      );
+    },
+
     async convert() {
       if (this.renderTimer !== null) {
         clearTimeout(this.renderTimer);
@@ -86,7 +97,7 @@
           //
           // Get the TeX input and the node to use for output.
           //
-          const input = document.querySelector('#input').value.trim();
+          const input = this.normalizeColorModels(document.querySelector('#input').value.trim());
           const output = document.querySelector('#output');
           //
           // Reset the tex labels (and automatic equation numbers, though there aren't any here).
