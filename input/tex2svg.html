@@ -12,11 +12,11 @@
     //
     loader: {load: ['[tex]/texhtml', '[tex]/color']},
     tex: {packages: {'[+]': ['texhtml', 'color']}},
-    output: {font: 'mathjax-termes'},
+    output: {font: 'mathjax-modern'},
     //
     // Use the startup ready() function to set the options as they
     // are in the browser (in case of a reload that retains input states),
-    // but reset the font menu, since loading the font can take time.
+    // but reset the font menus, since loading the fonts can take time.
     //
     startup: {
       ready() {
@@ -26,12 +26,13 @@
         MathJax.startup.defaultReady();
         //
         // Set the options based on the checkbox states, but
-        // reset the font menu, since getting one can be time consuming.
+        // reset the font menus, since getting them can be time consuming.
         //
         const doc = MathJax.startup.document;
         doc.inputJax.tex.parseOptions.options.allowTexHTML = document.querySelector('#allowhtml').checked;
         doc.outputJax.options.mathmlSpacing = document.querySelector('#mathmlspacing').checked;
-        document.querySelector('#font').value = 'mathjax-termes';
+        document.querySelector('#formula-font').value = 'mathjax-modern';
+        document.querySelector('#text-font').value = 'mathjax-termes';
         //
         // Disable the some menu items.
         //
@@ -39,7 +40,9 @@
         //
         // Typeset the initial math, when ready.
         //
-        MathJax.whenReady(() => Interactive.convert());
+        MathJax.whenReady(() => {
+          Interactive.initializeFonts();
+        });
       }
     },
     //
@@ -54,6 +57,85 @@
     renderTimer: null,
     rendering: false,
     rerender: false,
+    fontLoading: false,
+    fontRequest: 0,
+    fontReady: Promise.resolve(),
+    fontData: new Map(),
+    fontLoads: new Map(),
+    currentFonts: {formula: 'mathjax-modern', text: 'mathjax-modern'},
+    selectedFonts: {formula: 'mathjax-modern', text: 'mathjax-termes'},
+
+    //
+    // Initialize the formula font, load the text font, and install wrappers
+    // that make MathML mtext nodes use the independently selected text font.
+    //
+    async initializeFonts() {
+      const jax = MathJax.startup.document.outputJax;
+      this.fontData.set(this.currentFonts.formula, jax.font);
+      jax.textFont = jax.font;
+      this.installMixedFontWrappers();
+      await this.applyFontSelection();
+    },
+
+    //
+    // The standard SVG output jax has one font.  Give mtext wrappers a second
+    // font and make text-node measurement, rendering, and SVG glyph caching
+    // follow their parent wrapper's font.
+    //
+    installMixedFontWrappers() {
+      const jax = MathJax.startup.document.outputJax;
+      const {SvgMtext} = MathJax._.output.svg.Wrappers.mtext;
+      const {SvgTextNode} = MathJax._.output.svg.Wrappers.TextNode;
+
+      class MixedFontMtext extends SvgMtext {
+        getVariant() {
+          this.font = this.factory.jax.textFont || this.factory.jax.font;
+          super.getVariant();
+        }
+      }
+
+      class MixedFontTextNode extends SvgTextNode {
+        withParentFont(callback) {
+          const jax = this.factory.jax;
+          const font = this.parent ? this.parent.font : jax.font;
+          const formulaFont = jax.font;
+          this.font = font;
+          jax.font = font;
+          try {
+            return callback();
+          } finally {
+            jax.font = formulaFont;
+          }
+        }
+
+        getBBox(save = true) {
+          return this.withParentFont(() => super.getBBox(save));
+        }
+
+        toSVG(parents) {
+          return this.withParentFont(() => super.toSVG(parents));
+        }
+      }
+
+      jax.factory.setNodeClass('mtext', MixedFontMtext);
+      jax.factory.setNodeClass('text', MixedFontTextNode);
+    },
+
+    //
+    // Wait for the most recently requested fonts before rendering.  Recheck
+    // after every await in case the user selected another font meanwhile.
+    //
+    async waitForFonts() {
+      while (true) {
+        const pending = this.fontReady;
+        try {
+          await pending;
+        } catch (err) {
+          // applyFontSelection() reports the loading error and restores the menus.
+        }
+        if (pending === this.fontReady) return;
+      }
+    },
 
     //
     // Render shortly after the user stops typing.
@@ -82,6 +164,7 @@
         clearTimeout(this.renderTimer);
         this.renderTimer = null;
       }
+      await this.waitForFonts();
       if (this.rendering) {
         this.rerender = true;
         return;
@@ -140,7 +223,8 @@
     // Enable/disable the input controls
     //
     enableControls(enable = true) {
-      for (const name of ['display', 'allowhtml', 'mathmlspacing', 'font', 'render']) {
+      enable = enable && !this.rendering && !this.fontLoading;
+      for (const name of ['display', 'allowhtml', 'mathmlspacing', 'formula-font', 'text-font', 'render']) {
         document.querySelector(`#${name}`).disabled = !enable;
       }
       document.querySelector('#copy').disabled = !enable || !document.querySelector('#output svg');
@@ -235,48 +319,107 @@
     // Set the mathmlSpacing option and rerender.
     //
     mathmlSpacing(spacing) {
-      MathJax.startup.document.outputJax.options.mathmlSpacing = spacing;
+      const jax = MathJax.startup.document.outputJax;
+      jax.options.mathmlSpacing = spacing;
+      for (const font of new Set([jax.font, jax.textFont])) {
+        if (font) font.setOptions({mathmlSpacing: spacing});
+      }
       this.convert();
     },
 
     //
-    // Load and initialize the new font.
+    // Load and initialize an SVG font once, retaining a separate FontData
+    // instance and dynamic-character path for every MathJax font package.
     //
-    async setFont(font) {
-      this.enableControls(false);
-      //
-      // If the font isn't already loaded, put up a message that we are loading
-      // the font (since it can take a few seconds), set up the font path and
-      // clear any font configuraiton options that were set by the previous font.
-      // Finally, load the new font and wait for it to arrive.
-      //
-      if (!MathJax._.output.fonts[font]) {
-        document.querySelector('#output').innerHTML = `<div id="message">Loading ${font} font...</div>`;
-        MathJax.config.loader.paths[font] = MathJax.config.fontUrl(font);
-        for (const key of Object.keys(MathJax.config.svg.fontData.OPTIONS)) {
-          delete MathJax.config.svg[key];
+    loadFontData(font) {
+      if (this.fontData.has(font)) return Promise.resolve(this.fontData.get(font));
+      if (this.fontLoads.has(font)) return this.fontLoads.get(font);
+
+      const loading = (async () => {
+        try {
+          if (!MathJax._.output.fonts[font]) {
+            MathJax.config.loader.paths[font] = MathJax.config.fontUrl(font);
+            await MathJax.loader.load(`[${font}]/svg.js`);
+          }
+
+          const exports = Object.values(MathJax._.output.fonts[font].svg_ts);
+          const FontData = exports.find((value) =>
+            typeof value === 'function' && value.NAME && value.OPTIONS
+          );
+          if (!FontData) throw new Error(`No SVG FontData export found for ${font}`);
+
+          const {selectOptionsFromKeys} = MathJax._.util.Options;
+          const options = selectOptionsFromKeys(MathJax.config.svg, FontData.OPTIONS);
+          options.dynamicPrefix = `[${font}]/svg/dynamic`;
+          const instance = new FontData(options);
+          instance.setOptions({
+            mathmlSpacing: MathJax.startup.document.outputJax.options.mathmlSpacing
+          });
+          this.fontData.set(font, instance);
+          return instance;
+        } finally {
+          this.fontLoads.delete(font);
         }
-        await MathJax.loader.load(`[${font}]/svg.js`);
+      })();
+
+      this.fontLoads.set(font, loading);
+      return loading;
+    },
+
+    //
+    // Update either menu, then load and apply the latest pair of selections.
+    //
+    setFont(kind, font) {
+      this.selectedFonts[kind] = font;
+      return this.applyFontSelection();
+    },
+
+    async applyFontSelection() {
+      const request = ++this.fontRequest;
+      const selection = {...this.selectedFonts};
+      const output = document.querySelector('#output');
+      this.fontLoading = true;
+      this.enableControls(false);
+      output.innerHTML = `<div id="message">Loading ${selection.formula} and ${selection.text} fonts...</div>`;
+
+      const loading = Promise.all([
+        this.loadFontData(selection.formula),
+        this.loadFontData(selection.text)
+      ]).then(([formulaFont, textFont]) => {
+        if (request !== this.fontRequest) return false;
+
+        const jax = MathJax.startup.document.outputJax;
+        if (jax.svgStyles && jax.svgStyles.parentNode) {
+          jax.svgStyles.parentNode.removeChild(jax.svgStyles);
+        }
+        jax.svgStyles = null;
+        jax.reset();
+        jax.font = formulaFont;
+        jax.textFont = textFont;
+        for (const font of new Set([formulaFont, textFont])) {
+          font.setOptions({mathmlSpacing: jax.options.mathmlSpacing});
+        }
+        this.currentFonts = selection;
+        return true;
+      });
+      this.fontReady = loading;
+
+      try {
+        if (await loading) await this.convert();
+      } catch (err) {
+        if (request === this.fontRequest) {
+          this.selectedFonts = {...this.currentFonts};
+          document.querySelector('#formula-font').value = this.currentFonts.formula;
+          document.querySelector('#text-font').value = this.currentFonts.text || this.currentFonts.formula;
+          output.innerHTML = `<pre>Error loading font: ${err.message}</pre>`;
+        }
+        console.error(err);
+      } finally {
+        if (request === this.fontRequest) {
+          this.fontLoading = false;
+          this.enableControls(true);
+        }
       }
-      //
-      // Look up the FontData object for the font (its only export).
-      //
-      const fontData = Object.values(MathJax._.output.fonts[font].svg_ts)[0];
-      //
-      // Ask the output jax to remove its stylesheet and reset its caches,
-      // then give it a new font and set its mathml spacing option.
-      //
-      const {selectOptionsFromKeys} = MathJax._.util.Options;
-      const jax = MathJax.startup.document.outputJax;
-      document.head.removeChild(jax.styleSheet());
-      jax.svgStyles = null;
-      jax.reset();
-      jax.font = new fontData(selectOptionsFromKeys(MathJax.config.svg, fontData.OPTIONS));
-      jax.font.setOptions({mathmlSpacing: jax.options.mathmlSpacing});
-      //
-      // Re-render the math using the new font.
-      //
-      this.convert();
     }
   };
   </script>
@@ -312,8 +455,23 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}.
 
       <hr>
 
-      <label for="font">Font:</label>
-        <select id="font" onchange="Interactive.setFont(this.value)">
+      <label for="formula-font">Formula Font:</label>
+        <select id="formula-font" onchange="Interactive.setFont('formula', this.value)">
+          <option>mathjax-asana</option>
+          <option>mathjax-bonum</option>
+          <option>mathjax-dejavu</option>
+          <option>mathjax-fira</option>
+          <option selected>mathjax-modern</option>
+          <option>mathjax-newcm</option>
+          <option>mathjax-pagella</option>
+          <option>mathjax-schola</option>
+          <option>mathjax-stix2</option>
+          <option>mathjax-termes</option>
+          <option>mathjax-tex</option>
+        </select><br>
+
+      <label for="text-font">Text Font:</label>
+        <select id="text-font" onchange="Interactive.setFont('text', this.value)">
           <option>mathjax-asana</option>
           <option>mathjax-bonum</option>
           <option>mathjax-dejavu</option>
@@ -360,6 +518,12 @@ handled. Note that the user interface is disabled during the
 typesetting process, since the conversion is done asynchronously in
 this example. This prevents the user from starting a new typeset
 operation while one is already in progress.</p>
+
+<p>The <code>Formula Font</code> menu controls mathematical identifiers,
+numbers, and operators, while the <code>Text Font</code> menu controls
+content produced by <code>\text{...}</code>. Both fonts are converted to
+SVG paths, so copied SVG output does not depend on locally installed
+fonts.</p>
 
 </div>
 </div>
