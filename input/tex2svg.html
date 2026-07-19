@@ -12,7 +12,7 @@
     //
     loader: {load: ['[tex]/texhtml', '[tex]/color']},
     tex: {packages: {'[+]': ['texhtml', 'color']}},
-    output: {font: 'mathjax-modern'},
+    output: {font: 'mathjax-tex'},
     //
     // Use the startup ready() function to set the options as they
     // are in the browser (in case of a reload that retains input states),
@@ -31,7 +31,7 @@
         const doc = MathJax.startup.document;
         doc.inputJax.tex.parseOptions.options.allowTexHTML = document.querySelector('#allowhtml').checked;
         doc.outputJax.options.mathmlSpacing = document.querySelector('#mathmlspacing').checked;
-        document.querySelector('#formula-font').value = 'mathjax-modern';
+        document.querySelector('#formula-font').value = 'mathjax-tex';
         document.querySelector('#text-font').value = 'mathjax-termes';
         //
         // Disable the some menu items.
@@ -62,8 +62,8 @@
     fontReady: Promise.resolve(),
     fontData: new Map(),
     fontLoads: new Map(),
-    currentFonts: {formula: 'mathjax-modern', text: 'mathjax-modern'},
-    selectedFonts: {formula: 'mathjax-modern', text: 'mathjax-termes'},
+    currentFonts: {formula: 'mathjax-tex', text: 'mathjax-tex'},
+    selectedFonts: {formula: 'mathjax-tex', text: 'mathjax-termes'},
 
     //
     // Initialize the formula font, load the text font, and install wrappers
@@ -461,13 +461,13 @@ x = {-b \pm \sqrt{b^2-4ac} \over 2a}.
           <option>mathjax-bonum</option>
           <option>mathjax-dejavu</option>
           <option>mathjax-fira</option>
-          <option selected>mathjax-modern</option>
+          <option>mathjax-modern</option>
           <option>mathjax-newcm</option>
           <option>mathjax-pagella</option>
           <option>mathjax-schola</option>
           <option>mathjax-stix2</option>
           <option>mathjax-termes</option>
-          <option>mathjax-tex</option>
+          <option selected>mathjax-tex</option>
         </select><br>
 
       <label for="text-font">Text Font:</label>
